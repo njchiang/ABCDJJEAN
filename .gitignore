@@ -2,7 +2,9 @@
 *.asv
 
 # Intellij
-.idea
+.idea/
+*.iml
+out/
 
 # Python #
 
