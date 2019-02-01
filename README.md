@@ -1,2 +1,2 @@
 # ABCDJJEAN
-Submission for MICCAI ABCD challenge
+TBD/MontiLab all stars' submission for MICCAI ABCD challenge
