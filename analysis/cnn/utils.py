@@ -64,8 +64,14 @@ def load_img(bs):
     :param logger: logfile ID
     :return: Nifti1Image
     """
-    return image.load_img(bs, dtype=np.float64)
+    return image.load_img(bs, dtype=np.float32)
 
+
+def resample_img(im, target_affine, **kwargs):
+    """
+    simple wrapper for nilearn resampling
+    """
+    return image.resample_img(im, target_affine, **kwargs)
 
 def concat_imgs(imgs):
     """
@@ -74,7 +80,7 @@ def concat_imgs(imgs):
     :param logger: logfile ID
     :return: Nifti1Image
     """
-    return image.concat_imgs(imgs, dtype=np.float64)
+    return image.concat_imgs(imgs, dtype=np.float32)
 
 
 def index_img(imgs, index):
@@ -112,10 +118,10 @@ def mask_img(im, mask=None):
     """
     # solved as of nilearn 2.3
     # if isinstance(im, str):
-    return masking.apply_mask(im, mask, dtype=np.float64)
+    return masking.apply_mask(im, mask, dtype=np.float32)
     # else:
     #     write_to_logger("Masking file")
-    #     return masking._apply_mask_fmri(im, mask, dtype=np.float64)
+    #     return masking._apply_mask_fmri(im, mask, dtype=np.float32)
 
 
 def data_to_img(d, img, copy_header=False):
