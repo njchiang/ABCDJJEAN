@@ -1,0 +1,15 @@
+{
+  "name": "model",
+  "train_path": "D:\\fmri\\ABCD\\data\\jeff_training_guids.txt",
+  "inference_path": "D:\\fmri\\ABCD\\data\\jeff_val_guids.txt",
+  "save_dir": "D:\\fmri\\ABCD\\models\\FeatureModel",
+  "model": "dense",
+  "batch_size": 16,
+  "max_num_saved_models": 10,
+  "checkpoint_path": "",
+  "pretrained_model": "",
+  "max_steps": 10000,
+  "report_every": 10,
+  "save_every": 1000,
+  "learning_rate": 0.001
+}
