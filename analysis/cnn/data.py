@@ -48,12 +48,16 @@ def nifti_generator(file_list, nifti_path, labels, vol_labels, voxel_size_mm=Non
             ent_features = vol_labels.loc[s, entropy_idx].values
             mean_features = vol_labels.loc[s, mean_idx].values
             stdev_features = vol_labels.loc[s, stdev_idx].values
-            label = labels.loc[s]["residual_fluid_intelligence_score"] if s in labels else 0
+            try:
+                label = labels.loc[s]["residual_fluid_intelligence_score"]
+            except KeyError:
+                tf.logging.info("{} missing label, replacing with 0".format(s))
+                label = 0
             im = load_img(os.path.join(nifti_path, s, "baseline", "structural", "t1_brain.nii.gz")) #  os.path.join(nifti_path, s, b"baseline", b"structural", b"t1_brain.nii.gz"))
             if voxel_size_mm:
                 target_affine = np.diag((voxel_size_mm, voxel_size_mm, voxel_size_mm))
                 im = resample_img(im, target_affine)
-            yield im.get_data(), vol_features, ent_features, mean_features, stdev_features, label
+            yield im.get_data(), vol_features, ent_features, mean_features, stdev_features, label, s
         except (KeyError, FileNotFoundError):
             tf.logging.info("{} not loaded".format(s))
             continue
@@ -102,7 +106,7 @@ def _load_features():
 
 class DataLoader():
     def __init__(self, cfg=None, nifti_path=None, features_path=None, labels_path=None):
-
+        # NEED TO RETURN SUBJECT ID
         self.cfg=cfg if cfg else {}
         self.cfg["batch_size"] = 4
         self.cfg["max_concurrent_files"] = 4
@@ -171,18 +175,19 @@ class DataLoader():
         ds = tf.data.Dataset.from_generator(
                 generator,
                 output_types=(
-                    tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.float32)
+                    tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.string)
         )  #,
         # output_shapes=(tf.TensorShape([None, None, None]), tf.TensorShape([])))
 
         ds = ds.map(
-            lambda f, v, e, m, s, l:
+            lambda f, v, e, m, s, l, sub:
             {"image": f,
              "volume": tf.reshape(v, [self.feature_size["volume"]]),
              "entropy": tf.reshape(e, [self.feature_size["entropy"]]),
              "mean": tf.reshape(m, [self.feature_size["mean"]]),
              "stdev": tf.reshape(s, [self.feature_size["stdev"]]),
-             "label": tf.reshape(l, [1])},
+             "label": tf.reshape(l, [1]),
+             "subject": sub},
             num_parallel_calls=min(N_THREADS, batch_size)
         ).prefetch(self.cfg["max_concurrent_files"])
 
@@ -203,7 +208,7 @@ class DataLoader():
 
         return {"image": batch["image"], "volume": batch["volume"],
                 "entropy": batch["entropy"], "mean": batch["mean"],
-                "stdev": batch["stdev"]}, batch["label"]
+                "stdev": batch["stdev"], "subject": batch["subject"]}, batch["label"]
 
     def serving_input_fn(self):
         # in progress

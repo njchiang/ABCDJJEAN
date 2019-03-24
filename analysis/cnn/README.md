@@ -12,7 +12,7 @@ train using:
 
 predict validation using: (faster)
 
-`python predict.py --cfg=cfgs/vanilla.json --gpu=0 --guid=D:\\fmri\\ABCD\\data\\jeff_val_guids.txt --mode=val`
+`python predict.py --cfg=cfgs/vanilla.json --gpu=0 --guids=D:\\fmri\\ABCD\\data\\jeff_val_guids.txt --mode=val`
 
 OR
 
@@ -20,14 +20,14 @@ OR
 
 change the weights in cfg, then run
 
-`python deploy.py --cfg=cfgs/vanilla.json --gpu=0 --guid=D:\\fmri\\ABCD\\data\\jeff_val_guids.txt --mode=val`
+`python deploy.py --cfg=cfgs/vanilla.json --gpu=0 --guids=D:\\fmri\\ABCD\\data\\jeff_val_guids.txt --mode=val`
 
 
 evaluate predictions using
 
 `python evaluate.py --predictions=D:\fmri\ABCD\outputs\1553400163-val.csv`
 
-`python evaluate.py --predictions=D:\\fmri\\ABCD\\outputs\\model.ckpt-10000-val.csv`
+`python evaluate.py --predictions=D:\\fmri\\ABCD\\outputs\\model.ckpt-14000-val.csv`
 
 
 predict testing using

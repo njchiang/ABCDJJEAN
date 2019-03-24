@@ -32,7 +32,7 @@ def create_estimator_from_subclass(model, cfg):
         predictions = probabilities = logits
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            prediction_output = {"Predicted-residual": predictions}
+            prediction_output = {"Predicted-residual": predictions, "subject": features["subject"]}
             return tf.estimator.EstimatorSpec(mode,
                                               predictions=prediction_output)
 
