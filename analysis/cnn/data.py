@@ -217,13 +217,14 @@ class DataLoader():
         image = tf.placeholder(tf.float32, [None, None, None])
         volume = tf.placeholder(tf.float32, [self.feature_size["volume"]])
         entropy = tf.placeholder(tf.float32, [self.feature_size["entropy"]])
+        subject = tf.placeholder(tf.string, None)
 
-        features = {"image": image, "volume": volume, "entropy": entropy}
+        features = {"image": image, "volume": volume, "entropy": entropy, "subject": subject}
         features = _preprocess(features, self.cfg["crop_size"])
         features["image"] = tf.reshape(features["image"], [-1] + self.cfg["crop_size"] + [1])
         features["volume"] = tf.reshape(features["volume"], [-1, self.feature_size["volume"]])
         features["entropy"] = tf.reshape(features["entropy"], [-1, self.feature_size["entropy"]])
-        receiving_input_tensors = {"image": image, "volume": volume, "entropy": entropy}
+        receiving_input_tensors = {"image": image, "volume": volume, "entropy": entropy, "subject": subject}
 
         return tf.estimator.export.ServingInputReceiver(features, receiving_input_tensors)
 
