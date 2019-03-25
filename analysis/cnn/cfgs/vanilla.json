@@ -6,7 +6,7 @@
   "features_path": null,
   "labels_path": null,
   "save_dir": "D:\\fmri\\ABCD\\models\\VanillaModel",
-  "saved_model": "D:\\fmri\\ABCD\\weights\\1553400163",
+  "saved_model": "D:\\fmri\\ABCD\\weights\\1553474337",
   "model": "vanilla",
   "batch_size": 4,
   "max_num_saved_models": 10,
