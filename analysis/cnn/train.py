@@ -63,7 +63,7 @@ def main(_):
     tf.logging.info("Building model")
     model_fn, params = create_estimator_from_subclass(_MODELS[config["model"]], config)
     tf.logging.info("done")
-    dl = DataLoader()
+    dl = DataLoader(nifti_path=config["nifti_path"], features_path=config["features_path"], labels_path=config["labels_path"])
 
 
     classifier = tf.estimator.Estimator(
@@ -138,6 +138,6 @@ def main(_):
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)
     FLAGS = tf.app.flags.FLAGS
-    os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+    os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID" 
     os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu
     tf.app.run()

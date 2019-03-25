@@ -71,7 +71,7 @@ def init_tf_serving(cfg):
     tf.logging.info("Building model")
     model_fn, params = create_estimator_from_subclass(_MODELS[cfg["model"]], cfg)
     tf.logging.info("done")
-    data_handler = DataLoader()
+    data_handler = DataLoader(nifti_path=cfg["nifti_path"], features_path=cfg["features_path"], labels_path=cfg["labels_path"])
 
     # to allow for compatibility with tf 1.8
     classifier = tf.estimator.Estimator(

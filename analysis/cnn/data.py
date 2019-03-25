@@ -85,18 +85,20 @@ def _resize(x):
     x["image"] = tf.reshape(image, [s[0], s[1], s[2], 1])
     return x
 
-def _load_features():
+def _load_features(features_path=None):
+    if features_path is None:
+        features_path = os.path.join(DATA_DIR, "results")
     vol_labels = pd.concat(
         [pd.read_excel(
-            os.path.join(DATA_DIR, "results", "ALL_measures_evan.xlsx"),
+            os.path.join(features_path, "ALL_measures_evan.xlsx"),
             header=0,
             skiprows=1),
          pd.read_excel(
-            os.path.join(DATA_DIR, "results", "ALL_measures_evan_validation.xlsx"),
+            os.path.join(features_path, "ALL_measures_evan_validation.xlsx"),
             header=0,
             skiprows=1),
          pd.read_excel(
-            os.path.join(DATA_DIR, "results", "ALL_measures_evan_testing.xlsx"),
+            os.path.join(features_path, "ALL_measures_evan_testing.xlsx"),
             header=0,
             skiprows=1),
         ]).replace("missing", 0).rename(columns={"ID": "subject"}).set_index("subject", drop=True).fillna(0)
@@ -113,25 +115,25 @@ class DataLoader():
         self.cfg["num_interleave"] = 16
         self.cfg["rs_voxel_size"] = 2
         self.cfg["crop_size"] = [79, 91, 79]
-        self.cfg["nifti_path"] = os.path.join(DATA_DIR, "fmriresults01", "image03")
+        if nifti_path is None:
+            self.cfg["nifti_path"] = os.path.join(DATA_DIR, "fmriresults01", "image03")
+        else:
+            self.cfg["nifti_path"] = nifti_path
 
+        if labels_path is None:
+            labels_path = os.path.join(DATA_DIR, "results")
         self.labels = pd.concat(
             [
                 pd.read_csv(
-                    os.path.join(DATA_DIR,
-                                 "results",
-                                 "training_fluid_intelligenceV1.csv")
-                    ),
+                    os.path.join(labels_path,
+                                 "training_fluid_intelligenceV1.csv")),
                 pd.read_csv(
-                    os.path.join(DATA_DIR,
-                                 "results",
-                                 "validation_fluid_intelligenceV1.csv")
-                    )
+                    os.path.join(labels_path,
+                                 "validation_fluid_intelligenceV1.csv"))
             ]).set_index("subject")
 
         tf.logging.info("Loading ROI features...")
-        self.vol_labels = _load_features()
-
+        self.vol_labels = _load_features(features_path)
 
         self.feature_size = {
             "volume": sum(["_volume" in i for i in self.vol_labels.columns]),

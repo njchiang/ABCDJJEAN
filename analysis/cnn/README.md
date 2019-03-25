@@ -27,9 +27,9 @@ evaluate predictions using
 
 `python evaluate.py --predictions=D:\fmri\ABCD\outputs\1553400163-val.csv`
 
-`python evaluate.py --predictions=D:\\fmri\\ABCD\\outputs\\model.ckpt-14000-val.csv`
+`python evaluate.py --predictions=D:\\fmri\\ABCD\\outputs\\model.ckpt-12000-val.csv`
 
 
 predict testing using
 
-`python predict.py --cfg=cfgs/vanilla.json --gpu=0 --guid=D:\\fmri\\ABCD\\data\\jeff_testing_guids.txt --mode=testing`
+`python predict.py --cfg=cfgs/vanilla.json --gpu=0 --guids=D:\\fmri\\ABCD\\data\\jeff_testing_guids.txt --mode=testing`
