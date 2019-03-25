@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-
+import matplotlib.pyplot as plt
 
 tf.app.flags.DEFINE_string("predictions", "", "path to config file")
 tf.app.flags.DEFINE_string("labels", "D:\\fmri\\ABCD\\data\\results\\gt_validation.csv", "path to labels file")
@@ -22,8 +22,9 @@ def main(_):
 
     df.to_csv("{}-results.csv".format(os.path.splitext(FLAGS.predictions)[0]))
     print(df.mean())
-
-
+    df.plot(x="fluid.resid", y="predicted_score", kind="scatter")
+    plt.show()
+    
 """ testing the code """
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.DEBUG)

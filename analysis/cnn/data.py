@@ -48,12 +48,16 @@ def nifti_generator(file_list, nifti_path, labels, vol_labels, voxel_size_mm=Non
             ent_features = vol_labels.loc[s, entropy_idx].values
             mean_features = vol_labels.loc[s, mean_idx].values
             stdev_features = vol_labels.loc[s, stdev_idx].values
-            label = labels.loc[s]["residual_fluid_intelligence_score"] if s in labels else 0
+            try:
+                label = labels.loc[s]["residual_fluid_intelligence_score"]
+            except KeyError:
+                tf.logging.info("{} missing label, replacing with 0".format(s))
+                label = 0
             im = load_img(os.path.join(nifti_path, s, "baseline", "structural", "t1_brain.nii.gz")) #  os.path.join(nifti_path, s, b"baseline", b"structural", b"t1_brain.nii.gz"))
             if voxel_size_mm:
                 target_affine = np.diag((voxel_size_mm, voxel_size_mm, voxel_size_mm))
                 im = resample_img(im, target_affine)
-            yield im.get_data(), vol_features, ent_features, mean_features, stdev_features, label
+            yield im.get_data(), vol_features, ent_features, mean_features, stdev_features, label, s
         except (KeyError, FileNotFoundError):
             tf.logging.info("{} not loaded".format(s))
             continue
@@ -81,18 +85,20 @@ def _resize(x):
     x["image"] = tf.reshape(image, [s[0], s[1], s[2], 1])
     return x
 
-def _load_features():
+def _load_features(features_path=None):
+    if features_path is None:
+        features_path = os.path.join(DATA_DIR, "results")
     vol_labels = pd.concat(
         [pd.read_excel(
-            os.path.join(DATA_DIR, "results", "ALL_measures_evan.xlsx"),
+            os.path.join(features_path, "ALL_measures_evan.xlsx"),
             header=0,
             skiprows=1),
          pd.read_excel(
-            os.path.join(DATA_DIR, "results", "ALL_measures_evan_validation.xlsx"),
+            os.path.join(features_path, "ALL_measures_evan_validation.xlsx"),
             header=0,
             skiprows=1),
          pd.read_excel(
-            os.path.join(DATA_DIR, "results", "ALL_measures_evan_testing.xlsx"),
+            os.path.join(features_path, "ALL_measures_evan_testing.xlsx"),
             header=0,
             skiprows=1),
         ]).replace("missing", 0).rename(columns={"ID": "subject"}).set_index("subject", drop=True).fillna(0)
@@ -102,32 +108,32 @@ def _load_features():
 
 class DataLoader():
     def __init__(self, cfg=None, nifti_path=None, features_path=None, labels_path=None):
-
+        # NEED TO RETURN SUBJECT ID
         self.cfg=cfg if cfg else {}
         self.cfg["batch_size"] = 4
         self.cfg["max_concurrent_files"] = 4
         self.cfg["num_interleave"] = 16
         self.cfg["rs_voxel_size"] = 2
         self.cfg["crop_size"] = [79, 91, 79]
-        self.cfg["nifti_path"] = os.path.join(DATA_DIR, "fmriresults01", "image03")
+        if nifti_path is None:
+            self.cfg["nifti_path"] = os.path.join(DATA_DIR, "fmriresults01", "image03")
+        else:
+            self.cfg["nifti_path"] = nifti_path
 
+        if labels_path is None:
+            labels_path = os.path.join(DATA_DIR, "results")
         self.labels = pd.concat(
             [
                 pd.read_csv(
-                    os.path.join(DATA_DIR,
-                                 "results",
-                                 "training_fluid_intelligenceV1.csv")
-                    ),
+                    os.path.join(labels_path,
+                                 "training_fluid_intelligenceV1.csv")),
                 pd.read_csv(
-                    os.path.join(DATA_DIR,
-                                 "results",
-                                 "validation_fluid_intelligenceV1.csv")
-                    )
+                    os.path.join(labels_path,
+                                 "validation_fluid_intelligenceV1.csv"))
             ]).set_index("subject")
 
         tf.logging.info("Loading ROI features...")
-        self.vol_labels = _load_features()
-
+        self.vol_labels = _load_features(features_path)
 
         self.feature_size = {
             "volume": sum(["_volume" in i for i in self.vol_labels.columns]),
@@ -171,18 +177,19 @@ class DataLoader():
         ds = tf.data.Dataset.from_generator(
                 generator,
                 output_types=(
-                    tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.float32)
+                    tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.string)
         )  #,
         # output_shapes=(tf.TensorShape([None, None, None]), tf.TensorShape([])))
 
         ds = ds.map(
-            lambda f, v, e, m, s, l:
+            lambda f, v, e, m, s, l, sub:
             {"image": f,
              "volume": tf.reshape(v, [self.feature_size["volume"]]),
              "entropy": tf.reshape(e, [self.feature_size["entropy"]]),
              "mean": tf.reshape(m, [self.feature_size["mean"]]),
              "stdev": tf.reshape(s, [self.feature_size["stdev"]]),
-             "label": tf.reshape(l, [1])},
+             "label": tf.reshape(l, [1]),
+             "subject": sub},
             num_parallel_calls=min(N_THREADS, batch_size)
         ).prefetch(self.cfg["max_concurrent_files"])
 
@@ -203,7 +210,7 @@ class DataLoader():
 
         return {"image": batch["image"], "volume": batch["volume"],
                 "entropy": batch["entropy"], "mean": batch["mean"],
-                "stdev": batch["stdev"]}, batch["label"]
+                "stdev": batch["stdev"], "subject": batch["subject"]}, batch["label"]
 
     def serving_input_fn(self):
         # in progress

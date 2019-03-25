@@ -71,7 +71,7 @@ def init_tf_serving(cfg):
     tf.logging.info("Building model")
     model_fn, params = create_estimator_from_subclass(_MODELS[cfg["model"]], cfg)
     tf.logging.info("done")
-    data_handler = DataLoader()
+    data_handler = DataLoader(nifti_path=cfg["nifti_path"], features_path=cfg["features_path"], labels_path=cfg["labels_path"])
 
     # to allow for compatibility with tf 1.8
     classifier = tf.estimator.Estimator(
@@ -108,11 +108,18 @@ def process_serving(guid_file, data_handler, classifier, params):
             im_root=FLAGS.mode),
         checkpoint_path=params["checkpoint_path"]
     )
+
     results = {"subject": [], "predicted_score": []}
-    for sub, pred in zip(subjects, predictions):
+
+    for pred in predictions:
         results["predicted_score"].append(pred["Predicted-residual"].squeeze())
-        results["subject"].append(sub)
-        print("{}: {}".format(sub, pred))
+        results["subject"].append(pred["subject"].decode())
+        print("{}: {}".format(pred["subject"].decode(), pred["Predicted-residual"]))
+
+    # for sub, pred in zip(subjects, predictions):
+    #     results["predicted_score"].append(pred["Predicted-residual"].squeeze())
+    #     results["subject"].append(pred["subject"])
+    #     print("{}: {}".format(sub, pred))
     return results
 
 
